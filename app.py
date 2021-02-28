@@ -7,8 +7,9 @@ from contants import *
 v = {}
 for x, y in V:
     for e in E:
-        # Use entity e for node (x, y)?
-        v[x, y, e] = pulp.LpVariable(f"v[{x},{y},{e}]", cat="Binary")
+        for d in D:
+            # Use entity e for node (x, y) with direction d?
+            v[x, y, e, d] = pulp.LpVariable(f"v[{x},{y},{e},{d}]", cat="Binary")
 
 a = {}
 for x1, y1, x2, y2 in A:
@@ -21,80 +22,112 @@ for x1, y1, x2, y2 in A:
 model = pulp.LpProblem("facotizer", pulp.LpMinimize)
 
 # Minimize cost
-model += pulp.lpSum(v[x, y, e] * C[e] for x, y in V for e in E)
+model += pulp.lpSum(v[x, y, e, d] * C[e] for x, y in V for e in E for d in D)
 
 # - CONSTRAINTS --------------------------------------------------
 
-# for x in range(1, X_COUNT - 1):
-#     model += a[x, 3, x + 1, 3] == 1
+# - I/O ---
 
 for x, y in V:
     # Place inputs and outputs
     if (x, y) in I:
-        model += v[x, y, "I"] == 1
+        model += v[x, y, "I", "E"] == 1
     else:
-        model += v[x, y, "I"] == 0
+        model += v[x, y, "I", "E"] == 0
     if (x, y) in O:
-        model += v[x, y, "O"] == 1
+        model += v[x, y, "O", "E"] == 1
     else:
-        model += v[x, y, "O"] == 0
+        model += v[x, y, "O", "E"] == 0
 
 for y in Y:
     # Leave input and output space free of entities
     for e in E:
         if e != "I":
-            model += v[0, y, e] == 0
+            for d in D:
+                model += v[0, y, e, d] == 0
     for e in E:
         if e != "O":
-            model += v[X_COUNT + 1, y, e] == 0
+            for d in D:
+                model += v[X_COUNT + 1, y, e, d] == 0
+
+for x, y in I:
+    # Leave input nodes
+    model += pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable(x, y)) == 1
+for x, y in O:
+    # Enter output nodes
+    model += pulp.lpSum(a[x1, y1, x, y]
+                        for x1, y1 in reachable(x, y)) == 1
+
+# - GENERAL ---
 
 for x, y in V:
     # Each node can have at most one entity
-    model += pulp.lpSum(v[x, y, e] for e in E) <= 1
+    model += pulp.lpSum(v[x, y, e, d] for e in E for d in D) <= 1
+
+for x1, y1, x2, y2 in A:
+    # An arc must come from an entity
+    model += a[x1, y1, x2, y2] <= pulp.lpSum(v[x1, y1, e, d] for e in E for d in D)
+    # An arc must go to an entity
+    model += a[x1, y1, x2, y2] <= pulp.lpSum(v[x2, y2, e, d] for e in E for d in D)
 
 for x, y in V:
-    # An arc must enter each entity
-    model += pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable(x, y)
-                        ) == pulp.lpSum(v[x, y, e] for e in E if e not in ["O", "S", "T"])
-    # An arc must leave each entity
-    model += pulp.lpSum(a[x1, y1, x, y] for x1, y1 in reachable(x, y)
-                        ) == pulp.lpSum(v[x, y, e] for e in E if e not in ["I", "S", "T"])
-
-for x, y in V:
-    for x2, y2 in underground_reachable(x, y):
-        # Only underground belts can use long arcs
-        model += a[x, y, x2, y2] <= v[x, y, "U"]
-
-for x, y in V:
-    for x2, y2 in reachable(x, y):
-        # Exit from underground belts
-        model += v[x, y, "U"] + a[x, y, x2, y2] <= 1 + v[x2, y2, "V"]
+    if (x, y) not in I:
+        # If an arc leaves an entity, one must enter it
+        model += pulp.lpSum(a[x1, y1, x, y] for x1, y1 in reachable(x, y)) >= pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable(x, y)) / len(reachable(x, y))
 
 for x1, y1, x2, y2 in A:
     # Only go in one direction
     model += pulp.lpSum(a[x1, y1, x2, y2] + a[x2, y2, x1, y1]) <= 1
 
+# - BELTS ---
+
 for x, y in V:
-    for e in ["U", "V"]:
-        # Do not bend underground belts
-        model += pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable_horz(x, y)) + (1 - v[x, y, e]) >= pulp.lpSum(a[x1, y1, x, y] for x1, y1 in reachable_horz(x, y))
-        model += pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable_vert(x, y)) + (1 - v[x, y, e]) >= pulp.lpSum(a[x1, y1, x, y] for x1, y1 in reachable_vert(x, y))
+    # Only one arc can enter an entity
+    model += pulp.lpSum(a[x1, y1, x, y] for x1, y1 in reachable(x, y)) <= 1
+    # Only one arc can leave an entity
+    model += pulp.lpSum(a[x, y, x2, y2] for x2, y2 in reachable(x, y)) <= 1
+
+# - UNDERGROUND BELTS ---
+
+for x, y in V:
+    for x2, y2 in underground_reachable(x, y):
+        # Only underground belts can use long arcs
+        model += a[x, y, x2, y2] <= pulp.lpSum(v[x, y, "U", d] for d in D)
+
+for x, y in V:
+    for x2, y2 in reachable(x, y):
+        for d in D:
+            # Exit from underground belts
+            model += v[x, y, "U", d] + a[x, y, x2, y2] <= 1 + v[x2, y2, "V", d]
+
+# - SPLITTERS ---
+
+for x, y in V:
+    for e in ["S", "T", "I", "O"]:
+        for d in ["N", "S", "W"]:
+            # Only allow splitters and I/O in one direction (for now)
+            model += v[x, y, e, d] == 0
+            model += v[x, y, e, d] == 0
 
 for x, y in V:
     # Connect splitter segments
     if y - 1 in Y:
-        model += v[x, y, "S"] == v[x, y - 1, "T"]
-        model += a[x, y, x, y - 1] >= v[x, y, "S"]
+        model += v[x, y, "S", "E"] == v[x, y - 1, "T", "E"]
     else:
-        model += v[x, y, "S"] == 0
+        model += v[x, y, "S", "E"] == 0
     if y + 1 in Y:
-        model += v[x, y, "T"] == v[x, y + 1, "S"]
-        model += a[x, y, x, y + 1] >= v[x, y, "T"]
+        model += v[x, y, "T", "E"] == v[x, y + 1, "S", "E"]
     else:
-        model += v[x, y, "T"] == 0
+        model += v[x, y, "T", "E"] == 0
+
+for x, y in V:
+    # Enter each splitter
+    if x - 1 in X and y - 1 in Y:
+        model += v[x, y, "S", "E"] <= a[x - 1, y, x, y]
+
 
 # Use a splitter
-# model += pulp.lpSum(v[x, y, "S"] for x, y in V) >= 1
+model += pulp.lpSum(v[x, y, "S", "E"] for x, y in V) >= 1
 
 # - SOLVE MODEL --------------------------------------------------
 
@@ -119,4 +152,7 @@ else:
             arcs.append((x1, y1, x2, y2))
 
     print(string_from_solution(nodes))
+
+    print("\nGenerating document...")
     doc_from_solution(nodes, arcs)
+    print("Done.")
