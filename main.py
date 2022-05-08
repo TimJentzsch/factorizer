@@ -38,3 +38,5 @@ if __name__ == '__main__':
     end_problem = datetime.now()
     dur_problem = (end_problem - end_graph).total_seconds()
     print(f"Built problem ({dur_problem:.2f}s).")
+
+    problem.solve()
