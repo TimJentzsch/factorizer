@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 from pulp import *
 import networkx as nx
@@ -6,7 +6,10 @@ import networkx as nx
 from factorizer import D, F_s
 
 
-def build_problem(G: nx.DiGraph, c: Dict) -> LpProblem:
+VarDict = Dict[Tuple, LpVariable]
+
+
+def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, VarDict, VarDict, VarDict]:
     """Build the problem from the instance.
 
     Args:
@@ -128,7 +131,7 @@ def build_problem(G: nx.DiGraph, c: Dict) -> LpProblem:
         for e in E:
             problem += x[((n - 1, e), (n, e)), b] == 1
 
-    return problem
+    return problem, t, u, s, x, y
 
 
 def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):

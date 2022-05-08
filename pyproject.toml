@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.8"
 PuLP = "2.6.0"
 networkx = "2.8"
+matplotlib = "^3.5.2"
 
 [tool.poetry.dev-dependencies]
 

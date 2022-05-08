@@ -4,6 +4,8 @@ from factorizer.graph import build_graph
 from factorizer.problem import build_problem
 
 # Maximum range of underground belts
+from factorizer.visualization.graph import build_solution_graph
+
 R = 5
 
 # Material costs for basic belts
@@ -33,10 +35,12 @@ if __name__ == '__main__':
 
     print("Building problem...")
 
-    problem = build_problem(G, c)
+    problem, t, u, s, x, y = build_problem(G, c)
 
     end_problem = datetime.now()
     dur_problem = (end_problem - end_graph).total_seconds()
     print(f"Built problem ({dur_problem:.2f}s).")
 
     problem.solve()
+
+    build_solution_graph(G, problem, t, u, s, x, y)
