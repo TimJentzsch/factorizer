@@ -3,7 +3,7 @@ from typing import List
 import networkx as nx
 
 
-def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGraph:
+def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGraph:
     """Build the graph for the given instance.
 
     Args:
@@ -11,9 +11,9 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
         m: The height of the grid.
         B: The list of start indexes.
         E: The list of end indexes.
-        R: Ranges of the belts.
+        R: Maximum range of underground belts.
     """
-    G = nx.DiGraph()
+    G = nx.DiGraph(n=n, m=m, R=R)
 
     # --- NODES ---
 
@@ -37,14 +37,13 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
 
     # --- EDGES ---
 
-    for r in R:
-        is_transport_belt = r == 1
+    for r in range(1, R + 1):
         # Add edges going right
         G.add_edges_from(
             (((x, y), (x + r, y)) for x in range(n - r) for y in range(m)),
             grid=True,
             d="right",
-            transport=is_transport_belt,
+            r=r,
         )
 
         # Add edges going left
@@ -52,7 +51,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
             (((x, y), (x - r, y)) for x in range(r, n) for y in range(m)),
             grid=True,
             d="left",
-            transport=is_transport_belt,
+            r=r,
         )
 
         # Add up edges
@@ -60,7 +59,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
             (((x, y), (x, y + r)) for x in range(n) for y in range(m - r)),
             grid=True,
             d="up",
-            transport=is_transport_belt,
+            r=r,
         )
 
         # Add down edges
@@ -68,7 +67,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
             (((x, y), (x, y - r)) for x in range(n) for y in range(r, m)),
             grid=True,
             d="down",
-            transport=is_transport_belt,
+            r=r,
         )
 
     # FIXME: Add splitter edges
@@ -78,7 +77,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
         (((-1, b), (0, b)) for b in B),
         grid=False,
         d="right",
-        transport=True,
+        r=1,
         start=True,
         end=False,
     )
@@ -88,7 +87,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: range) -> nx.DiGr
         (((n - 1, e), (n, e)) for e in E),
         grid=False,
         d="right",
-        transport=True,
+        r=1,
         start=False,
         end=True,
     )
