@@ -96,14 +96,16 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
         for a in G.out_edges(v):
             problem += entity >= y[a]
 
-    # A transport belt has flow in its direction
+    # A transport belt can only have flow in its direction
     for v in V_grid:
-        for d in D:
-            if t_edge := dir_out_edge(G, v, d, 1):
-                problem += (
-                    t[v, d]
-                    <= y[t_edge]
-                )
+        for d1 in D:
+            for d2 in D:
+                if d1 != d2:
+                    if t_edge := dir_out_edge(G, v, d2, 1):
+                        problem += (
+                            y[t_edge]
+                            <= 1 - t[v, d1]
+                        )
 
     # Only underground belts can have underground flow
     for d in D:
