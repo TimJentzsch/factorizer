@@ -24,8 +24,8 @@ if __name__ == '__main__':
     n = 5
     m = 3
 
-    B = [0]
-    E = [2]
+    B = [1, 2]
+    E = [1, 2]
 
     print("Building graph...")
     start = datetime.now()

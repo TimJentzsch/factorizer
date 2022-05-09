@@ -76,13 +76,13 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     for v in V_grid:
         # Outgoing
         problem += (
-            lpSum(y[a] for a in G.out_edges(v))
+            lpSum(y[a] for a in G.out_edges(v) if not G.edges[a]["split"])
             <= 1
         )
 
         # Incoming
         problem += (
-            lpSum(y[a] for a in G.in_edges(v))
+            lpSum(y[a] for a in G.in_edges(v) if not G.edges[a]["split"])
             <= 1
         )
 
@@ -155,7 +155,7 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
 
 
 def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):
-    edges = [a for a in G.out_edges(v) if G.edges[a]["d"] == d and G.edges[a]["r"] == r]
+    edges = [a for a in G.out_edges(v) if G.edges[a]["d"] == d and G.edges[a]["r"] == r and not G.edges[a]["split"]]
 
     return edges[0] if len(edges) > 0 else None
 
