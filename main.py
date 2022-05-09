@@ -52,5 +52,5 @@ if __name__ == '__main__':
 
     problem.solve()
 
-    H = build_solution_graph(G, problem, t, u, s, x, y)
+    H = build_solution_graph(G, t, u, s, x, y)
     save_solution_graph(H, output_dir)
