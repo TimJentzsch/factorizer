@@ -100,6 +100,20 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
         for j in range(m - 1):
             problem += s[(i, j), "right"] == s[(i, j + 1), "left"]
 
+    # Balance splitter output
+    for v in V_grid:
+        for b in B:
+            for f in F_s:
+                M = (1 - s[v, f]) * 0.5 * len(E)
+                balanced_flow = 0.5 * lpSum(x[a, b] for a in G.in_edges(v))
+
+                splitter_edge = splitter_out_edge(G, v, f)
+                normal_edge = dir_out_edge(G, v, "right", 1)
+
+                if splitter_edge and normal_edge:
+                    problem += balanced_flow + M >= x[splitter_edge, b]
+                    problem += balanced_flow + M >= x[normal_edge, b]
+
     # Activated arcs must come from an entity and go to an entity
     for v in V_grid:
         entity = lpSum(t[v, d] + lpSum(u[v, d, r] for r in R_u) for d in D) + lpSum(s[v, f] for f in F_s)
@@ -173,3 +187,9 @@ def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):
 
     return edges[0] if len(edges) > 0 else None
 
+
+def splitter_out_edge(G: nx.DiGraph, v, f: str):
+    edge_d = "up" if f == "right" else "down"
+    edges = [a for a in G.out_edges(v) if G.edges[a]["d"] == edge_d and G.edges[a]["split"]]
+
+    return edges[0] if len(edges) > 0 else None
