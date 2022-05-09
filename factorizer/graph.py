@@ -13,7 +13,9 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGrap
         E: The list of end indexes.
         R: Maximum range of underground belts.
     """
-    G = nx.DiGraph(n=n, m=m, R=R, B=B, E=E)
+    name = f"{len(B)}x{len(E)}-balancer_{n}x{m}-grid"
+    print(f"Gname {name}")
+    G = nx.DiGraph(name=name, n=n, m=m, R=R, B=B, E=E)
 
     # --- NODES ---
 

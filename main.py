@@ -1,10 +1,13 @@
+import os.path
 from datetime import datetime
+
+import networkx as nx
 
 from factorizer.graph import build_graph
 from factorizer.problem import build_problem
 
 # Maximum range of underground belts
-from factorizer.visualization.graph import build_solution_graph
+from factorizer.visualization.graph import build_solution_graph, save_solution_graph
 
 R = 5
 
@@ -33,6 +36,12 @@ if __name__ == '__main__':
     dur_graph = (end_graph - start).total_seconds()
     print(f"Built graph ({dur_graph:.2f}s).")
 
+    name = G.graph["name"]
+    output_dir = os.path.join("output", name)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     print("Building problem...")
 
     problem, t, u, s, x, y = build_problem(G, c)
@@ -43,4 +52,5 @@ if __name__ == '__main__':
 
     problem.solve()
 
-    build_solution_graph(G, problem, t, u, s, x, y)
+    H = build_solution_graph(G, problem, t, u, s, x, y)
+    save_solution_graph(H, output_dir)

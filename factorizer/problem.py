@@ -27,7 +27,7 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     E = G.graph["E"]
     R_u: range = range(1, G.graph["R"] + 1)
 
-    problem = LpProblem(f"balancer_{n}_{m}", LpMinimize)
+    problem = LpProblem(G.graph["name"], LpMinimize)
 
     # --- VARIABLES ---
 

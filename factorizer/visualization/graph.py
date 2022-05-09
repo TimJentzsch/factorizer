@@ -1,3 +1,4 @@
+import os.path
 from typing import Tuple
 
 import networkx as nx
@@ -13,7 +14,7 @@ def build_solution_graph(G: nx.DiGraph, problem: LpProblem, t, u, s, x, y) -> nx
     m = G.graph["m"]
     R_u: range = range(1, G.graph["R"] + 1)
 
-    H = nx.DiGraph()
+    H = nx.DiGraph(name=G.graph["name"])
     pos = {}
     labels = {}
 
@@ -27,15 +28,6 @@ def build_solution_graph(G: nx.DiGraph, problem: LpProblem, t, u, s, x, y) -> nx
 
     nx.set_node_attributes(H, pos, "pos")
     nx.set_node_attributes(H, labels, "labels")
-
-    # Draw the graph
-    nx.draw_networkx(
-        H,
-        pos=nx.get_node_attributes(H, "pos"),
-        labels=nx.get_node_attributes(H, "labels"),
-        with_labels=True
-    )
-    plt.show()
 
     return H
 
@@ -56,3 +48,19 @@ def _get_node_label(v: Tuple[int, int], R_u: range, t, u, s) -> str:
             return f"s_{f[0]}"
 
     return ""
+
+
+def save_solution_graph(H: nx.DiGraph, output_dir: str) -> None:
+    """Save the solution graph to an image."""
+    # Draw the graph
+    nx.draw_networkx(
+        H,
+        pos=nx.get_node_attributes(H, "pos"),
+        labels=nx.get_node_attributes(H, "labels"),
+        with_labels=True
+    )
+
+    path = os.path.join(output_dir, "solution_graph.png")
+
+    # Save it to an image
+    plt.savefig(path, format="PNG")
