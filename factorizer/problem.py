@@ -95,6 +95,11 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
                 elif G.edges[a]["d"] == "down":
                     problem += y[a] <= s[v, "left"]
 
+    # Always place splitter fragments together
+    for i in range(n):
+        for j in range(m - 1):
+            problem += s[(i, j), "right"] == s[(i, j + 1), "left"]
+
     # Activated arcs must come from an entity and go to an entity
     for v in V_grid:
         entity = lpSum(t[v, d] + lpSum(u[v, d, r] for r in R_u) for d in D) + lpSum(s[v, f] for f in F_s)
