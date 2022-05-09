@@ -86,6 +86,15 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
             <= 1
         )
 
+    # Splitter arcs can only be activated by splitters
+    for v in V_grid:
+        for a in G.out_edges(v):
+            if G.edges[a]["split"]:
+                if G.edges[a]["d"] == "up":
+                    problem += y[a] <= s[v, "right"]
+                elif G.edges[a]["d"] == "down":
+                    problem += y[a] <= s[v, "left"]
+
     # Activated arcs must come from an entity and go to an entity
     for v in V_grid:
         entity = lpSum(t[v, d] + lpSum(u[v, d, r] for r in R_u) for d in D) + lpSum(s[v, f] for f in F_s)
