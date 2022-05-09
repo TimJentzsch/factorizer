@@ -18,13 +18,30 @@ def build_solution_graph(G: nx.DiGraph, problem: LpProblem, t, u, s, x, y) -> nx
     pos = {}
     labels = {}
 
-    for x in range(1, n):
-        for y in range(1, m):
+    # Grid nodes
+    for x in range(n):
+        for y in range(m):
             v = (x, y)
             pos[v] = v
             labels[v] = _get_node_label(v, R_u, t, u, s)
 
-            H.add_node((x, y))
+            H.add_node(v)
+
+    # Start nodes
+    for b in G.graph["B"]:
+        v = (-1, b)
+        pos[v] = v
+        labels[v] = "B"
+
+        H.add_node(v)
+
+    # End nodes
+    for e in G.graph["E"]:
+        v = (n, e)
+        pos[v] = v
+        labels[v] = "E"
+
+        H.add_node(v)
 
     nx.set_node_attributes(H, pos, "pos")
     nx.set_node_attributes(H, labels, "labels")
