@@ -105,6 +105,14 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
                     <= y[t_edge]
                 )
 
+    # Only underground belts can have underground flow
+    for d in D:
+        for v in V_grid:
+            for a in G.out_edges(v):
+                r = G.edges[a]["r"]
+                if r > 1:
+                    problem += y[a] <= u[v, d, r]
+
     # Only allow flow over activated arcs
     for a in A:
         for b in B:
