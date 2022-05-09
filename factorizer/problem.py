@@ -42,7 +42,7 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     s = {(v, f): LpVariable(f"s_{v}_{f}", cat=LpBinary) for v in V_grid for f in F_s}
 
     # Send how much from start point b over arc a?
-    x = {(a, b): LpVariable(f"x_{a}_{b}", cat=LpContinuous) for a in A for b in B}
+    x = {(a, b): LpVariable(f"x_{a}_{b}", cat=LpContinuous, lowBound=0.0) for a in A for b in B}
 
     # Activate arc a?
     y = {a: LpVariable(f"y_{a}", cat=LpBinary) for a in A}

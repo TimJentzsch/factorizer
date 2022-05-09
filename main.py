@@ -21,11 +21,11 @@ c = {
 }
 
 if __name__ == '__main__':
-    n = 15
-    m = 10
+    n = 5
+    m = 3
 
-    B = [4, 5]
-    E = [4, 5]
+    B = [1]
+    E = [1]
 
     print("Building graph...")
     start = datetime.now()

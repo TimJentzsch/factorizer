@@ -13,6 +13,13 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
     m = G.graph["m"]
     R_u: range = range(1, G.graph["R"] + 1)
 
+    w = (0, 1)
+    for b in G.graph["B"]:
+        for a in G.out_edges(w):
+            print(f"{a}_{b}: {x[a, b].value()}")
+        for a in G.in_edges(w):
+            print(f"{a}_{b}: {x[a, b].value()}")
+
     H = nx.DiGraph(**G.graph)
 
     # --- NODES ---
