@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "factorizer"
+version = "2.0.0"
+description = "A tool to generate optimal belt balancers for Factorio."
+authors = ["Tim Jentzsch <tim-jentzsch@gmx.de>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+PuLP = "2.6.0"
+networkx = "2.8"
+matplotlib = "^3.5.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
