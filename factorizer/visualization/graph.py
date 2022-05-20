@@ -5,6 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 from factorizer import D, F_s
+from factorizer.utils import dir_out_edge
 
 
 def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
@@ -23,7 +24,7 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
     for i in range(n):
         for j in range(m):
             v = (i, j)
-            node_labels[v] = _get_node_label(v, R_u, t, u, s)
+            node_labels[v] = _get_node_label(G, v, R_u, t, u, s, y)
 
             H.add_node(v)
 
@@ -60,17 +61,30 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
             label = "/".join([str(int(f)) for f in flows.values()])
             edge_labels[a] = label
 
-            H.add_edge(*a)
+            H.add_edge(
+                *a, d=G.edges[a]["d"], r=G.edges[a]["r"], split=G.edges[a]["split"]
+            )
 
     nx.set_edge_attributes(H, edge_labels, "edge_labels")
 
     return H
 
 
-def _get_node_label(v: Tuple[int, int], R_u: range, t, u, s) -> str:
+def _get_node_label(G: nx.DiGraph, v: Tuple[int, int], R_u: range, t, u, s, y) -> str:
     """Get the label for the given node v."""
     if t[v].value() == 1:
-        return f"t"
+        t_dir = None
+
+        for d in D:
+            if a := dir_out_edge(G, v, d, 1):
+                if y[a].value() == 1:
+                    t_dir = d
+                    break
+
+        if t_dir is None:
+            return "t"
+        else:
+            return f"t_{t_dir[0]}"
 
     for d in D:
         for r in R_u:
