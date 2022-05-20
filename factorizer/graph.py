@@ -28,13 +28,19 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGrap
     # Add a node for each starting point
     G.add_nodes_from(
         ((-1, b) for b in B),
-        grid=False, split=False, start=True, end=False,
+        grid=False,
+        split=False,
+        start=True,
+        end=False,
     )
 
     # Add a node for each end point
     G.add_nodes_from(
         ((n, e) for e in E),
-        grid=False, split=False, start=False, end=True,
+        grid=False,
+        split=False,
+        start=False,
+        end=True,
     )
 
     # --- EDGES ---
@@ -81,7 +87,8 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGrap
         for y in range(m):
             if y < m - 1:
                 G.add_edge(
-                    (x, y), (x + 1, y + 1),
+                    (x, y),
+                    (x + 1, y + 1),
                     grid=True,
                     split=True,
                     d="up",
@@ -90,7 +97,8 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGrap
 
             if y > 0:
                 G.add_edge(
-                    (x, y), (x + 1, y - 1),
+                    (x, y),
+                    (x + 1, y - 1),
                     grid=True,
                     split=True,
                     d="down",

@@ -69,9 +69,8 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
 
 def _get_node_label(v: Tuple[int, int], R_u: range, t, u, s) -> str:
     """Get the label for the given node v."""
-    for d in D:
-        if t[v, d].value() == 1:
-            return f"t_{d[0]}"
+    if t[v].value() == 1:
+        return f"t"
 
     for d in D:
         for r in R_u:
@@ -118,5 +117,5 @@ def save_solution_graph(H: nx.DiGraph, output_dir: str) -> None:
     path = os.path.join(output_dir, "solution_graph.png")
 
     # Save it to an image
-    plt.savefig(path, format="PNG", bbox_inches='tight')
+    plt.savefig(path, format="PNG", bbox_inches="tight")
     plt.close()
