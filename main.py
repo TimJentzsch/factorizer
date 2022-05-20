@@ -30,13 +30,21 @@ def _centered_tiles(grid_height: int, belt_height: int) -> List[int]:
     return [i for i in range(edge_room, edge_room + belt_height)]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser("Factorio belt balancer")
 
-    parser.add_argument("-b", "--balancer", default="4x4",
-                        help="The size of the balanced belts. nxm means n input belts and m output belts.")
-    parser.add_argument("-g", "--grid", default="10x4",
-                        help="The size of the grid. nxm means a grid n tiles wide and m tiles high.")
+    parser.add_argument(
+        "-b",
+        "--balancer",
+        default="4x4",
+        help="The size of the balanced belts. nxm means n input belts and m output belts.",
+    )
+    parser.add_argument(
+        "-g",
+        "--grid",
+        default="10x4",
+        help="The size of the grid. nxm means a grid n tiles wide and m tiles high.",
+    )
 
     args = parser.parse_args()
 

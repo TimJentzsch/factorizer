@@ -9,7 +9,9 @@ from factorizer import D, F_s
 VarDict = Dict[Tuple, LpVariable]
 
 
-def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, VarDict, VarDict, VarDict]:
+def build_problem(
+    G: nx.DiGraph, c: Dict
+) -> Tuple[LpProblem, VarDict, VarDict, VarDict, VarDict, VarDict]:
     """Build the problem from the instance.
 
     Args:
@@ -31,18 +33,27 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
 
     # --- VARIABLES ---
 
-    # Build a transport belt at node v in direction d?
-    t = {(v, d): LpVariable(f"t_{v}_{d}", cat=LpBinary) for v in V_grid for d in D}
+    # Build a transport belt at node v?
+    t = {v: LpVariable(f"t_{v}", cat=LpBinary) for v in V_grid}
 
     # Build underground belt with range r at node v in direction d?
-    u = {(v, d, r): LpVariable(f"u_{v}_{d}_{r}", cat=LpBinary) for v in V_grid for d in D for r in R_u}
+    u = {
+        (v, d, r): LpVariable(f"u_{v}_{d}_{r}", cat=LpBinary)
+        for v in V_grid
+        for d in D
+        for r in R_u
+    }
 
     # Build splitter fragment f at node v?
     # For now, we assume splitters always point rightwards
     s = {(v, f): LpVariable(f"s_{v}_{f}", cat=LpBinary) for v in V_grid for f in F_s}
 
     # Send how much from start point b over arc a?
-    x = {(a, b): LpVariable(f"x_{a}_{b}", cat=LpContinuous, lowBound=0.0) for a in A for b in B}
+    x = {
+        (a, b): LpVariable(f"x_{a}_{b}", cat=LpContinuous, lowBound=0.0)
+        for a in A
+        for b in B
+    }
 
     # Activate arc a?
     y = {a: LpVariable(f"y_{a}", cat=LpBinary) for a in A}
@@ -50,12 +61,11 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     # --- OBJECTIVE ---
 
     problem += lpSum(
-        lpSum(
-            c["transport"] * t[v, d]
-            + lpSum(c["underground"] * u[v, d, r] for r in R_u)
-            for d in D
+        (
+            c["transport"] * t[v]
+            + lpSum(c["underground"] * u[v, d, r] for r in R_u for d in D)
+            + lpSum(c["splitter"] * s[v, f] for f in F_s)
         )
-        + lpSum(c["splitter"] * s[v, f] for f in F_s)
         for v in V_grid
     )
 
@@ -64,27 +74,18 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     # Only place at most one entity on each tile
     for v in V_grid:
         problem += (
-            lpSum(
-                t[v, d]
-                + lpSum(u[v, d, r] for r in R_u)
-                for d in D
-            )
+            t[v]
+            + lpSum(u[v, d, r] for r in R_u for d in D)
             + lpSum(s[v, f] for f in F_s)
         ) <= 1
 
     # Only one non-splitter arc can be activated per tile
     for v in V_grid:
         # Outgoing
-        problem += (
-            lpSum(y[a] for a in G.out_edges(v) if not G.edges[a]["split"])
-            <= 1
-        )
+        problem += lpSum(y[a] for a in G.out_edges(v) if not G.edges[a]["split"]) <= 1
 
         # Incoming
-        problem += (
-            lpSum(y[a] for a in G.in_edges(v) if not G.edges[a]["split"])
-            <= 1
-        )
+        problem += lpSum(y[a] for a in G.in_edges(v) if not G.edges[a]["split"]) <= 1
 
     # Splitter arcs can only be activated by splitters
     for v in V_grid:
@@ -116,24 +117,17 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
 
     # Activated arcs must come from an entity and go to an entity
     for v in V_grid:
-        entity = lpSum(t[v, d] + lpSum(u[v, d, r] for r in R_u) for d in D) + lpSum(s[v, f] for f in F_s)
+        entity = (
+            t[v]
+            + lpSum(u[v, d, r] for r in R_u for d in D)
+            + lpSum(s[v, f] for f in F_s)
+        )
 
         for a in G.in_edges(v):
             problem += entity >= y[a]
 
         for a in G.out_edges(v):
             problem += entity >= y[a]
-
-    # A transport belt can only have flow in its direction
-    for v in V_grid:
-        for d1 in D:
-            for d2 in D:
-                if d1 != d2:
-                    if t_edge := dir_out_edge(G, v, d2, 1):
-                        problem += (
-                            y[t_edge]
-                            <= 1 - t[v, d1]
-                        )
 
     # Only underground belts can have underground flow
     for d in D:
@@ -146,17 +140,11 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
     # Only allow flow over activated arcs
     for a in A:
         for b in B:
-            problem += (
-                x[a, b]
-                <= len(E) * y[a]
-            )
+            problem += x[a, b] <= len(E) * y[a]
 
     # Respect belt capacity
     for a in A:
-        problem += (
-            lpSum(x[a, b] for b in B)
-            <= len(E)
-        )
+        problem += lpSum(x[a, b] for b in B) <= len(E)
 
     # Flow conservation
     for v in V_grid:
@@ -183,13 +171,19 @@ def build_problem(G: nx.DiGraph, c: Dict) -> Tuple[LpProblem, VarDict, VarDict, 
 
 
 def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):
-    edges = [a for a in G.out_edges(v) if G.edges[a]["d"] == d and G.edges[a]["r"] == r and not G.edges[a]["split"]]
+    edges = [
+        a
+        for a in G.out_edges(v)
+        if G.edges[a]["d"] == d and G.edges[a]["r"] == r and not G.edges[a]["split"]
+    ]
 
     return edges[0] if len(edges) > 0 else None
 
 
 def splitter_out_edge(G: nx.DiGraph, v, f: str):
     edge_d = "up" if f == "right" else "down"
-    edges = [a for a in G.out_edges(v) if G.edges[a]["d"] == edge_d and G.edges[a]["split"]]
+    edges = [
+        a for a in G.out_edges(v) if G.edges[a]["d"] == edge_d and G.edges[a]["split"]
+    ]
 
     return edges[0] if len(edges) > 0 else None
