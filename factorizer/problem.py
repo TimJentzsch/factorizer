@@ -105,15 +105,23 @@ def build_problem(
     for v in V_grid:
         for b in B:
             for f in F_s:
-                M = (1 - s[v, f]) * 0.5 * len(E)
-                balanced_flow = 0.5 * lpSum(x[a, b] for a in G.in_edges(v))
-
                 splitter_edge = splitter_out_edge(G, v, f)
                 normal_edge = dir_out_edge(G, v, "right", 1)
 
                 if splitter_edge and normal_edge:
+                    balanced_flow = 0.5 * lpSum(x[a, b] for a in G.in_edges(v))
+                    M = (1 - y[splitter_edge]) * 0.5 * len(E)
+
                     problem += balanced_flow + M >= x[splitter_edge, b]
                     problem += balanced_flow + M >= x[normal_edge, b]
+
+    # A splitter can only have flow to the right
+    for v in V_grid:
+        for f in F_s:
+            for d in D:
+                if d != "right":
+                    if dir_edge := dir_out_edge(G, v, d, 1):
+                        problem += y[dir_edge] <= 1 - s[v, f]
 
     # Activated arcs must come from an entity and go to an entity
     for v in V_grid:
