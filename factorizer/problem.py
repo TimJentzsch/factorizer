@@ -27,7 +27,7 @@ def build_problem(
     m: int = G.graph["m"]
     B = G.graph["B"]
     E = G.graph["E"]
-    R_u: range = range(1, G.graph["R"] + 1)
+    R_u: range = range(2, G.graph["R"] + 1)
 
     problem = LpProblem(G.graph["name"], LpMinimize)
 
@@ -140,10 +140,29 @@ def build_problem(
     # Only underground belts can have underground flow
     for d in D:
         for v in V_grid:
-            for a in G.out_edges(v):
-                r = G.edges[a]["r"]
-                if r > 1:
-                    problem += y[a] <= u[v, d, r]
+            for r in R_u:
+                if underground_edge := dir_out_edge(G, v, d, r):
+                    problem += y[underground_edge] == u[v, d, r]
+                else:
+                    problem += u[v, d, r] == 0
+
+                for d2 in D:
+                    if transport_belt_edge := dir_out_edge(G, v, d2, 1):
+                        # Underground belts cannot have transport belt flow
+                        problem += y[transport_belt_edge] <= 1 - u[v, d, r]
+
+    # An underground belt must have a transport belt as "end piece"
+    for v in V_grid:
+        for d in D:
+            for r in R_u:
+                if underground_edge := dir_out_edge(G, v, d, r):
+                    (start, end) = underground_edge
+
+                    if transport_belt_edge := dir_out_edge(G, end, d, 1):
+                        problem += u[v, d, r] <= t[end]
+                        problem += u[v, d, r] <= y[transport_belt_edge]
+                    else:
+                        problem += u[v, d, r] == 0
 
     # Only allow flow over activated arcs
     for a in A:

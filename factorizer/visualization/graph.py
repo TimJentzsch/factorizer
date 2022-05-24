@@ -12,7 +12,7 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
     """Build a graph from the solution of the problem."""
     n = G.graph["n"]
     m = G.graph["m"]
-    R_u: range = range(1, G.graph["R"] + 1)
+    R_u: range = range(2, G.graph["R"] + 1)
 
     H = nx.DiGraph(**G.graph)
 
@@ -84,16 +84,16 @@ def _get_node_label(G: nx.DiGraph, v: Tuple[int, int], R_u: range, t, u, s, y) -
         if t_dir is None:
             return "t"
         else:
-            return f"t_{t_dir[0]}"
+            return f"t{t_dir[0]}"
 
     for d in D:
         for r in R_u:
             if u[v, d, r].value() == 1:
-                return f"u_{d[0]},{r}"
+                return f"u{d[0]}{r}"
 
     for f in F_s:
         if s[v, f].value() == 1:
-            return f"s_{f[0]}"
+            return f"s{f[0]}"
 
     return ""
 

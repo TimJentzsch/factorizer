@@ -12,7 +12,7 @@ from factorizer.problem import build_problem
 # Maximum range of underground belts
 from factorizer.visualization.graph import build_solution_graph, save_solution_graph
 
-R = 5
+R = 4
 
 # Material costs for basic belts
 c = {
