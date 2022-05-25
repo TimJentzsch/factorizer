@@ -14,10 +14,20 @@ def opposite_dir(d: str) -> str:
     raise Exception(f"Invalid direction {d}")
 
 
-def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):
+def dir_out_edge(G: nx.DiGraph, v, d: str, r: int = 1):
     edges = [
         a
         for a in G.out_edges(v)
+        if G.edges[a]["d"] == d and G.edges[a]["r"] == r and not G.edges[a]["split"]
+    ]
+
+    return edges[0] if len(edges) > 0 else None
+
+
+def dir_in_edge(G: nx.DiGraph, v, d: str, r: int = 1):
+    edges = [
+        a
+        for a in G.in_edges(v)
         if G.edges[a]["d"] == d and G.edges[a]["r"] == r and not G.edges[a]["split"]
     ]
 

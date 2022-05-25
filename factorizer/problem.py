@@ -4,7 +4,7 @@ from pulp import *
 import networkx as nx
 
 from factorizer import D, F_s
-from factorizer.utils import splitter_out_edge, dir_out_edge, opposite_dir
+from factorizer.utils import splitter_out_edge, dir_out_edge, opposite_dir, dir_in_edge
 
 VarDict = Dict[Tuple, LpVariable]
 
@@ -106,7 +106,7 @@ def build_problem(
         for b in B:
             for f in F_s:
                 splitter_edge = splitter_out_edge(G, v, f)
-                normal_edge = dir_out_edge(G, v, "right", 1)
+                normal_edge = dir_out_edge(G, v, "right")
 
                 if splitter_edge and normal_edge:
                     balanced_flow = 0.5 * lpSum(x[a, b] for a in G.in_edges(v))
@@ -122,7 +122,15 @@ def build_problem(
         for f in F_s:
             for d in D:
                 if d != "right":
-                    if dir_edge := dir_out_edge(G, v, d, 1):
+                    if dir_edge := dir_out_edge(G, v, d):
+                        problem += y[dir_edge] <= 1 - s[v, f]
+
+    # A splitter can only take flow from the left
+    for v in V_grid:
+        for f in F_s:
+            for d in D:
+                if d != "right":
+                    if dir_edge := dir_in_edge(G, v, d):
                         problem += y[dir_edge] <= 1 - s[v, f]
 
     # Activated arcs must come from an entity and go to an entity
@@ -149,7 +157,7 @@ def build_problem(
                     problem += u[v, d, r] == 0
 
                 for d2 in D:
-                    if transport_belt_edge := dir_out_edge(G, v, d2, 1):
+                    if transport_belt_edge := dir_out_edge(G, v, d2):
                         # Underground belts cannot have transport belt flow
                         problem += y[transport_belt_edge] <= 1 - u[v, d, r]
 
@@ -178,7 +186,7 @@ def build_problem(
                 if underground_edge := dir_out_edge(G, v, d, r):
                     (start, node) = underground_edge
 
-                    if transport_belt_edge := dir_out_edge(G, node, d, 1):
+                    if transport_belt_edge := dir_out_edge(G, node, d):
                         problem += u[v, d, r] <= t[node]
                         problem += u[v, d, r] <= y[transport_belt_edge]
                     else:
