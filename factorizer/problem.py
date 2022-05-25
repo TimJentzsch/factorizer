@@ -4,7 +4,7 @@ from pulp import *
 import networkx as nx
 
 from factorizer import D, F_s
-from factorizer.utils import splitter_out_edge, dir_out_edge
+from factorizer.utils import splitter_out_edge, dir_out_edge, opposite_dir
 
 VarDict = Dict[Tuple, LpVariable]
 
@@ -114,6 +114,8 @@ def build_problem(
 
                     problem += balanced_flow + M >= x[splitter_edge, b]
                     problem += balanced_flow + M >= x[normal_edge, b]
+                else:
+                    problem += s[v, f] == 0
 
     # A splitter can only have flow to the right
     for v in V_grid:
@@ -138,8 +140,8 @@ def build_problem(
             problem += entity >= y[a]
 
     # Only underground belts can have underground flow
-    for d in D:
-        for v in V_grid:
+    for v in V_grid:
+        for d in D:
             for r in R_u:
                 if underground_edge := dir_out_edge(G, v, d, r):
                     problem += y[underground_edge] == u[v, d, r]
@@ -151,15 +153,33 @@ def build_problem(
                         # Underground belts cannot have transport belt flow
                         problem += y[transport_belt_edge] <= 1 - u[v, d, r]
 
+    # Avoid underground belt conflicts
+    for v in V_grid:
+        for d in D:
+            for r in R_u:
+                for node_range in range(r):
+                    if underground_edge := dir_out_edge(G, v, d, node_range):
+                        # For all nodes that are "in the way"...
+                        (_, node) = underground_edge
+
+                        # ...no underground belts can go "in a parallel direction" on these nodes
+                        for other_range in R_u:
+                            if dir_out_edge(G, node, d, node_range):
+                                problem += u[node, d, other_range] <= 1 - u[v, d, r]
+                            if dir_out_edge(G, node, opposite_dir(d), node_range):
+                                problem += (
+                                    u[node, opposite_dir(d), other_range] <= 1 - u[v, d, r]
+                                )
+
     # An underground belt must have a transport belt as "end piece"
     for v in V_grid:
         for d in D:
             for r in R_u:
                 if underground_edge := dir_out_edge(G, v, d, r):
-                    (start, end) = underground_edge
+                    (start, node) = underground_edge
 
-                    if transport_belt_edge := dir_out_edge(G, end, d, 1):
-                        problem += u[v, d, r] <= t[end]
+                    if transport_belt_edge := dir_out_edge(G, node, d, 1):
+                        problem += u[v, d, r] <= t[node]
                         problem += u[v, d, r] <= y[transport_belt_edge]
                     else:
                         problem += u[v, d, r] == 0

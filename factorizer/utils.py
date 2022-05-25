@@ -1,6 +1,19 @@
 import networkx as nx
 
 
+def opposite_dir(d: str) -> str:
+    if d == "right":
+        return "left"
+    if d == "left":
+        return "right"
+    if d == "up":
+        return "down"
+    if d == "down":
+        return "up"
+
+    raise Exception(f"Invalid direction {d}")
+
+
 def dir_out_edge(G: nx.DiGraph, v, d: str, r: int):
     edges = [
         a
