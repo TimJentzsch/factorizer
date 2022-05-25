@@ -12,7 +12,7 @@ def build_solution_graph(G: nx.DiGraph, t, u, s, x, y) -> nx.DiGraph:
     """Build a graph from the solution of the problem."""
     n = G.graph["n"]
     m = G.graph["m"]
-    R_u: range = range(2, G.graph["R"] + 1)
+    R_u = G.graph["R_u"]
 
     H = nx.DiGraph(**G.graph)
 

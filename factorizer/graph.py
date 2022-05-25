@@ -15,7 +15,7 @@ def build_graph(n: int, m: int, B: List[int], E: List[int], R: int) -> nx.DiGrap
     """
     name = f"{len(B)}x{len(E)}-balancer_{n}x{m}-grid"
     print(f"Gname {name}")
-    G = nx.DiGraph(name=name, n=n, m=m, R=R, B=B, E=E)
+    G = nx.DiGraph(name=name, n=n, m=m, R=R, R_u=range(2, R + 1), B=B, E=E)
 
     # --- NODES ---
 

@@ -10,6 +10,7 @@ from factorizer.graph import build_graph
 from factorizer.problem import build_problem
 
 # Maximum range of underground belts
+from factorizer.visualization.blueprint import convert_to_blueprint
 from factorizer.visualization.graph import build_solution_graph, save_solution_graph
 
 R = 4
@@ -88,3 +89,6 @@ if __name__ == "__main__":
 
     H = build_solution_graph(G, t, u, s, x, y)
     save_solution_graph(H, output_dir)
+
+    with open(os.path.join(output_dir, "blueprint.txt"), "w") as file:
+        file.write(convert_to_blueprint(G, t, u, s, x, y))

@@ -27,7 +27,7 @@ def build_problem(
     m: int = G.graph["m"]
     B = G.graph["B"]
     E = G.graph["E"]
-    R_u: range = range(2, G.graph["R"] + 1)
+    R_u = G.graph["R_u"]
 
     problem = LpProblem(G.graph["name"], LpMinimize)
 
@@ -176,7 +176,8 @@ def build_problem(
                                 problem += u[node, d, other_range] <= 1 - u[v, d, r]
                             if dir_out_edge(G, node, opposite_dir(d), node_range):
                                 problem += (
-                                    u[node, opposite_dir(d), other_range] <= 1 - u[v, d, r]
+                                    u[node, opposite_dir(d), other_range]
+                                    <= 1 - u[v, d, r]
                                 )
 
     # An underground belt must have a transport belt as "end piece"
