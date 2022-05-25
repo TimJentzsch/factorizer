@@ -6,8 +6,20 @@ from typing import Dict, Optional, Tuple
 
 import networkx as nx
 
-from factorizer import D, F_s
+from factorizer import D
 from factorizer.utils import dir_out_edge, dir_in_edge
+
+
+def parse_blueprint(blueprint: str) -> Dict:
+    """Parse a blueprint string."""
+    # Remove the version byte at the start
+    blueprint = blueprint[1:]
+    # Decode the base64 string
+    decoded = base64.b64decode(blueprint.encode("ascii"))
+    # Decompress the JSON string
+    decompressed = zlib.decompress(decoded).decode()
+    # Parse the JSON string to get the data
+    return json.loads(decompressed)
 
 
 def construct_blueprint_data(G: nx.DiGraph, t, u, s, x, y) -> Dict:
